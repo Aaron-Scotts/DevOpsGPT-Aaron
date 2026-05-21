@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu, Plus, MessageSquare, User, Sparkles, Settings } from 'lucide-react';
+import { Send, Menu, Plus, MessageSquare, User, Sparkles, Settings, Crown, X, Check } from 'lucide-react';
 
 function App() {
   const [messages, setMessages] = useState([
@@ -7,6 +7,11 @@ function App() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [premiumEmail, setPremiumEmail] = useState('');
+  const [premiumLoading, setPremiumLoading] = useState(false);
+  const [premiumSuccess, setPremiumSuccess] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -16,6 +21,32 @@ function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  const handleSubscribe = async () => {
+    if (!premiumEmail.includes('@')) return;
+    setPremiumLoading(true);
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: premiumEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsPremium(true);
+        setPremiumSuccess(true);
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `⭐ ${data.message}\n\nVos avantages Premium :\n${data.features.map(f => `• ${f}`).join('\n')}`
+        }]);
+        setTimeout(() => setShowPremiumModal(false), 1500);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPremiumLoading(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -50,6 +81,19 @@ function App() {
           <Plus size={16} />
           Nouveau Chat
         </button>
+
+        {/* Bouton Premium */}
+        <button
+          onClick={() => { setShowPremiumModal(true); setPremiumSuccess(false); }}
+          className={`mt-3 flex items-center gap-3 p-3 rounded-lg text-sm font-medium w-full text-left transition-colors border ${
+            isPremium
+              ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-400'
+              : 'bg-transparent border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10'
+          }`}
+        >
+          <Crown size={16} />
+          {isPremium ? 'Abonné Premium ✓' : 'Passer Premium'}
+        </button>
         
         <div className="flex-1 overflow-y-auto mt-6 space-y-2">
           <p className="text-xs text-gray-500 font-semibold px-3 mb-3">Aujourd'hui</p>
@@ -76,7 +120,13 @@ function App() {
           </button>
           <div className="flex items-center gap-2 mx-auto md:mx-0 cursor-pointer hover:bg-white/5 px-3 py-1.5 rounded-lg transition-colors">
             <span className="font-semibold text-sm">DevOpsGPT</span>
-            <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400 font-medium">3.5</span>
+            {isPremium ? (
+              <span className="text-xs bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 font-semibold flex items-center gap-1">
+                <Crown size={10} /> Premium
+              </span>
+            ) : (
+              <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400 font-medium">3.5</span>
+            )}
           </div>
           <div className="w-8 md:hidden"></div> {/* Spacer for centering on mobile */}
         </header>
@@ -164,6 +214,57 @@ function App() {
         </div>
 
       </div>
+
+      {/* Modal Premium */}
+      {showPremiumModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#2f2f2f] rounded-2xl border border-yellow-500/30 p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Crown size={20} className="text-yellow-400" />
+                <h2 className="text-lg font-bold text-white">Abonnement Premium</h2>
+              </div>
+              <button onClick={() => setShowPremiumModal(false)} className="text-gray-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            {premiumSuccess ? (
+              <div className="flex flex-col items-center py-6 gap-3">
+                <div className="w-14 h-14 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                  <Check size={28} className="text-yellow-400" />
+                </div>
+                <p className="text-yellow-400 font-semibold">Premium activé !</p>
+              </div>
+            ) : (
+              <>
+                <ul className="space-y-2 mb-6">
+                  {['Réponses illimitées', 'Accès GPT-4', 'Support prioritaire'].map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <Check size={14} className="text-yellow-400 shrink-0" />{f}
+                    </li>
+                  ))}
+                </ul>
+                <input
+                  type="email"
+                  value={premiumEmail}
+                  onChange={e => setPremiumEmail(e.target.value)}
+                  placeholder="Votre adresse email"
+                  className="w-full bg-[#212121] border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500/50 mb-3"
+                />
+                <button
+                  onClick={handleSubscribe}
+                  disabled={premiumLoading || !premiumEmail.includes('@')}
+                  className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-40 text-black font-semibold py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <Crown size={16} />
+                  {premiumLoading ? 'Activation...' : 'Activer Premium'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
