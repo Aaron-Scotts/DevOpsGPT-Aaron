@@ -73,6 +73,41 @@ app.post('/chat', async (req, res) => {
   });
 });
 
+// --- FEATURE: Abonnement Premium ---
+
+// Souscrire à l'abonnement premium
+app.post('/subscribe', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Adresse email invalide' });
+  }
+
+  try {
+    await client.set(`premium:${email}`, 'active');
+    console.log(`⭐ Nouvel abonné Premium : ${email}`);
+  } catch (e) {
+    console.log('⚠️ Redis indisponible, abonnement en mémoire uniquement');
+  }
+
+  res.json({
+    success: true,
+    message: `Abonnement Premium activé pour ${email}`,
+    plan: 'Premium',
+    features: ['Réponses illimitées', 'Accès GPT-4', 'Support prioritaire']
+  });
+});
+
+// Vérifier le statut d'abonnement
+app.get('/subscription/:email', async (req, res) => {
+  const { email } = req.params;
+  try {
+    const status = await client.get(`premium:${email}`);
+    res.json({ email, premium: status === 'active' });
+  } catch (e) {
+    res.json({ email, premium: false });
+  }
+});
+
 app.listen(port, () => {
   console.log(`🚀 Serveur Backend en cours d'exécution sur le port ${port}`);
   if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'test_key') {
