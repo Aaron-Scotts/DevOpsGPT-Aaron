@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  chat-api:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - REDIS_URL=redis://cache:6379
+    depends_on:
+      - cache
+
+  chat-ui:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - chat-api
+
+  cache:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
