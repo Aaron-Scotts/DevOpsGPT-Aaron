@@ -1,0 +1,35 @@
+name: CI/CD DevOpsGPT
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Installer les dépendances
+        run: npm install
+        working-directory: ./backend
+
+      - name: Lancer les tests
+        run: npm test
+        working-directory: ./backend
+
+      - name: Déploiement (uniquement sur tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "Déploiement en cours..."
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
