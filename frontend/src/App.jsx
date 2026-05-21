@@ -75,7 +75,7 @@ function App() {
   return (
     <div className="flex h-screen bg-[#212121] text-gray-100 font-sans selection:bg-blue-500/30">
       
-      {/* Barre Latérale (Sidebar) - Inspirée de ChatGPT / OpenWebUI */}
+      {/* Sidebar */}
       <div className="hidden md:flex flex-col w-[260px] bg-[#171717] px-3 py-4 border-r border-white/5">
         <button className="flex items-center gap-3 bg-transparent hover:bg-[#2f2f2f] transition-colors p-3 rounded-lg border border-white/10 text-sm font-medium w-full text-left">
           <Plus size={16} />
@@ -128,12 +128,12 @@ function App() {
               <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400 font-medium">3.5</span>
             )}
           </div>
-          <div className="w-8 md:hidden"></div> {/* Spacer for centering on mobile */}
+          <div className="w-8 md:hidden"></div>
         </header>
 
         {/* Zone des messages */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto w-full flex flex-col pb-32"> {/* pb-32 laisse la place pour l'input */}
+            <div className="max-w-3xl mx-auto w-full flex flex-col pb-32">
             {messages.length === 1 && (
                <div className="flex flex-col items-center justify-center mt-32 opacity-40">
                   <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
